@@ -677,8 +677,15 @@ class PaymentEntry(AccountsController):
 
 	def validate_mandatory(self):
 		for field in ("paid_amount", "received_amount", "source_exchange_rate", "target_exchange_rate"):
+			self.set(field, flt(self.get(field)))
 			if not self.get(field):
+<<<<<<< HEAD
 				frappe.throw(_("{0} is mandatory").format(_(self.meta.get_label(field))))
+=======
+				frappe.throw(_("{0} is mandatory").format(self.meta.get_translated_label(field)))
+			if self.get(field) < 0:
+				frappe.throw(_("{0} must be greater than zero").format(self.meta.get_translated_label(field)))
+>>>>>>> 2645062 (fix(accounts): correct payment cancellation and reject negative amounts)
 
 	def validate_reference_documents(self):
 		valid_reference_doctypes = self.get_valid_reference_doctypes()
@@ -878,6 +885,7 @@ class PaymentEntry(AccountsController):
 			base_outstanding = flt(allocated_amount * conversion_rate, base_outstanding_precision)
 
 			if cancel:
+<<<<<<< HEAD
 				frappe.db.sql(
 					"""
 					UPDATE `tabPayment Schedule`
@@ -898,6 +906,17 @@ class PaymentEntry(AccountsController):
 						key[0],
 					),
 				)
+=======
+				(
+					frappe.qb.update(ps)
+					.set(ps.paid_amount, ps.paid_amount - (allocated_amount - discounted_amt))
+					.set(ps.base_paid_amount, ps.base_paid_amount - base_paid_amount)
+					.set(ps.discounted_amount, ps.discounted_amount - discounted_amt)
+					.set(ps.outstanding, ps.outstanding + allocated_amount)
+					.set(ps.base_outstanding, ps.base_outstanding + base_outstanding)
+					.where((ps.parent == key[1]) & (ps.payment_term == key[0]))
+				).run()
+>>>>>>> 2645062 (fix(accounts): correct payment cancellation and reject negative amounts)
 			else:
 				if allocated_amount > outstanding:
 					frappe.throw(
