@@ -89,6 +89,7 @@ class TestPOSInvoiceMergeLog(unittest.TestCase):
 		try:
 			test_user, pos_profile = init_user_and_profile()
 
+<<<<<<< HEAD
 			pos_inv = create_pos_invoice(rate=300, do_not_submit=1)
 			pos_inv.append("payments", {"mode_of_payment": "Cash", "account": "Cash - _TC", "amount": 300})
 			pos_inv.save()
@@ -98,6 +99,26 @@ class TestPOSInvoiceMergeLog(unittest.TestCase):
 			pos_inv2.append("payments", {"mode_of_payment": "Cash", "account": "Cash - _TC", "amount": 3200})
 			pos_inv2.save()
 			pos_inv2.submit()
+=======
+		mode = frappe.get_doc(
+			{
+				"doctype": "Mode of Payment",
+				"mode_of_payment": "_Test Retired Payment Mode",
+				"type": "Cash",
+				"enabled": 1,
+				"accounts": [{"company": "_Test Company", "default_account": "Cash - _TC"}],
+			}
+		).insert()
+		pos_inv3 = create_pos_invoice(customer="_Test Customer 2", rate=2300, do_not_submit=1)
+		pos_inv3.append("payments", {"mode_of_payment": mode.name, "account": "Cash - _TC", "amount": 2300})
+		pos_inv3.save()
+		pos_inv3.submit()
+
+		mode.enabled = 0
+		mode.save()
+
+		self.make_closing_entry()
+>>>>>>> 7feeb6f (test(accounts): cover mode of payment validation)
 
 			pos_inv3 = create_pos_invoice(customer="_Test Customer 2", rate=2300, do_not_submit=1)
 			pos_inv3.append("payments", {"mode_of_payment": "Cash", "account": "Cash - _TC", "amount": 2300})
@@ -118,6 +139,10 @@ class TestPOSInvoiceMergeLog(unittest.TestCase):
 			frappe.set_user("Administrator")
 			frappe.db.sql("delete from `tabPOS Profile`")
 			frappe.db.sql("delete from `tabPOS Invoice`")
+
+		consolidated = frappe.get_doc("Sales Invoice", pos_inv3.consolidated_invoice)
+		self.assertEqual(consolidated.docstatus, 1)
+		self.assertTrue(any(payment.mode_of_payment == mode.name for payment in consolidated.payments))
 
 	def test_consolidated_credit_note_creation(self):
 		frappe.db.sql("delete from `tabPOS Invoice`")
