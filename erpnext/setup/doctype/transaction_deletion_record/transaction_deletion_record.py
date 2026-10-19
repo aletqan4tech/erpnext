@@ -309,11 +309,30 @@ class TransactionDeletionRecord(Document):
 						docfield.doctype_name, docfield.docfield_name
 					)
 					if no_of_docs > 0:
+<<<<<<< HEAD
 						reference_docs = frappe.get_all(
 							docfield.doctype_name,
 							filters={docfield.docfield_name: self.company},
 							limit=self.batch_size,
 						)
+=======
+						if company_field:
+							reference_docs = frappe.get_all(
+								docfield.doctype_name,
+								filters={company_field: self.company},
+								fields=["name"],
+								order_by="name asc",
+								limit=self.batch_size,
+							)
+						else:
+							reference_docs = frappe.get_all(
+								docfield.doctype_name,
+								fields=["name"],
+								order_by="name asc",
+								limit=self.batch_size,
+							)
+
+>>>>>>> b0e6739 (fix(setup): order transaction deletion batches by name)
 						reference_doc_names = [r.name for r in reference_docs]
 
 						self.delete_version_log(docfield.doctype_name, reference_doc_names)
